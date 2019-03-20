@@ -120,6 +120,12 @@ class Blaze:
     def passed(self):
         return self.minimum_dip > self.allowable_dip and self.max_dip_time < self.allowable_time
 
+    def pass_dip_magnitude(self):
+        return self.minimum_dip > self.allowable_dip
+
+    def pass_max_dip_time(self):
+        return self.max_dip_time < self.allowable_time
+
     def _generate_data(self):
         temp_times = []
         temp_flow_rates = []
@@ -202,7 +208,6 @@ class Blaze:
         upper_bound = 0
 
         i = len(self.raw_times) - 1
-
         while i >= 0 and upper_bound == 0:
             if Blaze.in_range(self.expected_flow_rate, self.raw_flow_rates[i]):
                 j = i

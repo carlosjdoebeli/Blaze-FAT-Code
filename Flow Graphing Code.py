@@ -11,33 +11,23 @@ An instrument is underperforming if any of the following conditions occur:
 """""
 
 
-
-#print average flow
-
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 import os
+import re
+import time
 import statistics
 from Blaze import Blaze
 
-# This can be used to manually input the series labels instead of reading them from the file
-
-# SERIES = 4
-# SERIES_LABELS = ([
-#         "1mL Syringe",
-#         "3mL Syringe",
-#         "5mL Syringe",
-#         "10mL Syringe"
-#         ])
+COLORS = (['b', 'g', 'r', 'm', 'c', 'peru'])
 
 files = []
 path = 'C:/Users/cdoebeli/Documents/Github/Blaze-FAT-code'   # Configure this path each time you use the code
 fileNames = []
-labels = []
 blazes = []
 blaze_runs = []
+raw_names = []
 
 times = []
 flow_rates = []
@@ -59,36 +49,68 @@ def closeFiles():
 
 def plot():
 
-    for i in range(0, len(blaze_runs)):
+    for run_index in range(0, len(blaze_runs)):
+        name = blaze_runs[run_index]
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
         expected = 0
         median = 0
         resolutions = []
-        passfail = "passed"
+        failures = []
+        dip_magnitudes = []
+        dip_times = []
 
         for j in range(0, len(blazes)):
-            if blazes[j].get_name() is blaze_runs[i] and len(flow_rates[i]) >= 3:
-                plt.plot(np.array(blazes[j].get_times()), np.array(blazes[j].get_flow_rates()), '.', label=labels[i],
-                         markersize=0.5)
+            if blazes[j].get_name() == name and len(blazes[j].get_flow_rates()) >= 3:
+                plt.plot(np.array(blazes[j].get_times()), np.array(blazes[j].get_flow_rates()), '.',
+                         markersize=0.5, color=COLORS[len(dip_magnitudes)])
                 plt.axhline(y=blazes[j].get_allowable_dip(), linestyle=':', color='r')
+
                 median += blazes[j].get_median_flow()
                 expected += blazes[j].get_expected_flow()
                 resolutions.append(blazes[j].sample_resolution)
-                if not blazes[j].passed():
-                    passfail = "passed"
+                dip_magnitudes.append(blazes[j].get_minimum_dip())
+                dip_times.append(blazes[j].get_max_dip_time())
+
+                if not blazes[j].pass_dip_magnitude() and "Dip Magnitude" not in failures:
+                    failures.append("Dip Magnitude")
+
+                if not blazes[j].pass_max_dip_time() and "Maximum Dip Time" not in failures:
+                    failures.append("Max Dip Time")
+
+        if not (1 - Blaze.margin_frac()) * expected < median < (1 + Blaze.margin_frac()) * expected:
+            failures.append("Total Median Flow Rate")
 
         resolution = statistics.median(resolutions)
 
         plt.subplots_adjust(top=0.85, right=0.7)
-        plt.text(1.05, 0.85, 'matplotlib', transform = ax.transAxes)
-        plot_title = name + "_" + str(i+1) + "\n Median flow is: {0:.2f}. Median sample resolution is {1:.3f}s.\nInstrument {2} for flow dips.".format(median, resolution, passfail)
-        plot_name = name + "_" + str(i+1)
-        if (1 - Blaze.margin_frac()) * expected < median < (1 + Blaze.margin_frac()) * expected and passfail is "passed":
-            ax.set_title(plot_title, fontsize='large')
+        props = dict(facecolor='none', edgecolor='black', pad=4)
+
+        plot_title = name + "\n\n"
+        ax.set_title(plot_title, fontsize='large')
+        if len(failures) is 0:
+            plt.text(0.5, 1.05, "PASS", color='g', transform=ax.transAxes, fontsize='large', fontweight='bold', ha='center')
         else:
-            ax.set_title(plot_title, color='r', fontsize='large')
+            failures = sorted(failures, reverse=True)
+            fail_string = "FAIL: "
+            for k in range(0, len(failures)):
+                fail_string += failures[k]
+                if k is not len(failures) - 1:
+                    fail_string += ", "
+            plt.text(0.5, 1.05, fail_string, color='r', transform=ax.transAxes, fontsize='large', fontweight='bold', ha='center')
+
+        plt.text(1.015, 0.85, "Time resolution = {0:.2f} s\nMedian flow = {1:.2f} mL/s\nFlow percent = {2:.1f}%".format(resolution, median, median/expected*100.0), transform=ax.transAxes, bbox=props, fontsize=11)
+
+        for k in range(0, len(dip_magnitudes)):
+            plt.text(1.015, 0.85 - (k + 1) * 0.35, "\nMax dip time = {0:.2f}s\nMagnitude = {1:.2f}mL/s".format(dip_times[k], dip_magnitudes[k]), transform=ax.transAxes, bbox=props, fontsize=11)
+            plt.text(1.015, 0.85 - (k + 1) * 0.35, "Run {0}:\n\n".format(k + 1), transform=ax.transAxes, fontsize=11, color=COLORS[k], fontweight='bold')
+
+        t = time.localtime()
+        timestamp = time.strftime('%b-%d-%Y_%H.%M', t)
+        plot_name = "Blaze-FAT-Test_" + raw_names[run_index]
+        plot_name = plot_name.replace("/", "-") + "_" + timestamp
+
         ax.set_xlabel('time (s)')
         ax.set_ylabel('flow rate (mL/min)')
         axbottom, axtop = ax.get_ylim()
@@ -98,29 +120,54 @@ def plot():
         fileName += plot_name + ".png"
         fig.savefig(fileName)
 
+
 def read_data():
     times.append([])
     flow_rates.append([])
 
-    titled = False
-
     for line in files[i]:
         data = line.split(';')
-        if len(data) == 1 and not titled:
-            labels.append(data[0].rstrip("\n\r"))
-            titled = True
-        elif len(data) >= 2:
+        if len(data) >= 2:
             times[i].append(float(data[0]))
             flow_rates[i].append(float(data[1]))
 
-    if not titled:
-        labels.append("Series " + str(i + 1))
 
-def get_exp_flow(fileNames, index):
-    if index % 2 == 0:
-        return 9
+def get_run(fileNames, index):
+    file_name = fileNames[index]
+    raw_name = os.path.splitext(os.path.basename(file_name))[0]
+    if raw_name not in raw_names:
+        raw_names.append(raw_name)
+    textsplit = raw_name.split("_")
+
+    while len(textsplit) < 4:
+        textsplit.append("")
+
+    inst_name = textsplit[0]
+    ratios = textsplit[1]
+    total_flow_rate = textsplit[2]
+    side = textsplit[3]
+
+    # tfr = (re.findall("[\d]+(['.'][\d]*)?", total_flow_rate)[0])
+    # print(len(tfr))
+    # tfr=12
+    tfr = float(re.findall(r'\d+\.?\d+', total_flow_rate)[0])
+    lhs, rhs = ratios.split("to")
+    lhs = float(lhs)
+    rhs = float(rhs)
+
+    if side == "LHS":
+        exp_flow = float(tfr * lhs / (lhs + rhs))
+    elif side == "RHS":
+        exp_flow = float(tfr * rhs / (lhs + rhs))
     else:
-        return 3
+        if index % 2 == 0:
+            exp_flow = 9
+        else:
+            exp_flow = 3
+
+    run_name = inst_name + ", " + ratios.replace("to", " to ") + " ratio, expected flow rate " + total_flow_rate.replace("-", "/")
+
+    return run_name, exp_flow
 
 
 openFiles()
@@ -128,22 +175,17 @@ openFiles()
 for i in range(0, len(files)):
     read_data()
 
-
-
-    if i < 2:
-        run = "1"
-    else:
-        run = "2"
+    run, exp_flow = get_run(fileNames, i)
 
     if run not in blaze_runs:
         blaze_runs.append(run)
 
-    exp_flow = get_exp_flow(fileNames, i)
     temp_blaze = Blaze(times[i], flow_rates[i], run, expected_flow=exp_flow)
     blazes.append(temp_blaze)
 
-# print(labels)
-name = input("Please enter file name: ")
+for text in blaze_runs:
+    print(text)
+
 for blaze in blazes:
     blaze.pass_print()
 plot()
