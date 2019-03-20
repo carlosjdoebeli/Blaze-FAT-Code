@@ -106,11 +106,8 @@ def plot():
             plt.text(1.015, 0.85 - (k + 1) * 0.35, "\nMax dip time = {0:.2f}s\nMagnitude = {1:.2f}mL/s".format(dip_times[k], dip_magnitudes[k]), transform=ax.transAxes, bbox=props, fontsize=11)
             plt.text(1.015, 0.85 - (k + 1) * 0.35, "Run {0}:\n\n".format(k + 1), transform=ax.transAxes, fontsize=11, color=COLORS[k], fontweight='bold')
 
-        t = time.localtime()
-        timestamp = time.strftime('%b-%d-%Y_%H.%M', t)
         plot_name = "Blaze-FAT-Test_" + raw_names[run_index]
-        plot_name = plot_name.replace("/", "-") + "_" + timestamp
-
+        plot_name = plot_name.replace("/", "-")
         ax.set_xlabel('time (s)')
         ax.set_ylabel('flow rate (mL/min)')
         axbottom, axtop = ax.get_ylim()
@@ -135,8 +132,10 @@ def read_data():
 def get_run(fileNames, index):
     file_name = fileNames[index]
     raw_name = os.path.splitext(os.path.basename(file_name))[0]
-    if raw_name not in raw_names:
-        raw_names.append(raw_name)
+
+    print(raw_name.split("_RHS")[0].split("_LHS")[0])
+    if raw_name.split("_RHS")[0].split("_LHS")[0] not in raw_names:
+        raw_names.append(raw_name.split("_RHS")[0].split("_LHS")[0])
     textsplit = raw_name.split("_")
 
     while len(textsplit) < 4:
@@ -147,9 +146,6 @@ def get_run(fileNames, index):
     total_flow_rate = textsplit[2]
     side = textsplit[3]
 
-    # tfr = (re.findall("[\d]+(['.'][\d]*)?", total_flow_rate)[0])
-    # print(len(tfr))
-    # tfr=12
     tfr = float(re.findall(r'\d+\.?\d+', total_flow_rate)[0])
     lhs, rhs = ratios.split("to")
     lhs = float(lhs)
@@ -184,6 +180,9 @@ for i in range(0, len(files)):
     blazes.append(temp_blaze)
 
 for text in blaze_runs:
+    print(text)
+
+for text in raw_names:
     print(text)
 
 for blaze in blazes:
