@@ -16,14 +16,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 import os
 import re
-import time
+import sys
 import statistics
 from Blaze import Blaze
 
 COLORS = (['b', 'g', 'r', 'm', 'c', 'peru'])
 
 files = []
-path = 'C:/Users/cdoebeli/Documents/Github/Blaze-FAT-code'   # Configure this path each time you use the code
+path = sys.path[0]   # Configure this path each time you use the code
 fileNames = []
 blazes = []
 blaze_runs = []
@@ -113,8 +113,7 @@ def plot():
         axbottom, axtop = ax.get_ylim()
         ax.set_ylim(min(axbottom, -0.5), max(axtop, 10))
 
-        fileName = "C:/Users/cdoebeli/Documents/Github/Blaze-FAT-Code/"
-        fileName += plot_name + ".png"
+        fileName = sys.path[0] + "/" + plot_name + ".png"     # Configure this path to determine where to save the files
         fig.savefig(fileName)
 
 
