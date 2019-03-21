@@ -50,10 +50,10 @@ class Blaze:
         self.allowable_dip = min(float(self.expected_flow_rate - MAX_DIP_ABS), self.expected_flow_rate * MAX_DIP_FRAC)
         self.passes = self.passed()
 
-        print(self.median_flow)
-        print(self.max_dip_time)
-        print(self.minimum_dip)
-        print("")
+        # print(self.median_flow)
+        # print(self.max_dip_time)
+        # print(self.minimum_dip)
+        # print("")
 
     def get_name(self):
         return self.name

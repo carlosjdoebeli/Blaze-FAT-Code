@@ -64,7 +64,7 @@ def plot():
         for j in range(0, len(blazes)):
             if blazes[j].get_name() == name and len(blazes[j].get_flow_rates()) >= 3:
                 plt.plot(np.array(blazes[j].get_times()), np.array(blazes[j].get_flow_rates()), '.',
-                         markersize=0.5, color=COLORS[len(dip_magnitudes)])
+                         markersize=0.5, color=COLORS[len(dip_magnitudes) % len(COLORS)])
                 plt.axhline(y=blazes[j].get_allowable_dip(), linestyle=':', color='r')
 
                 median += blazes[j].get_median_flow()
@@ -132,7 +132,6 @@ def get_run(fileNames, index):
     file_name = fileNames[index]
     raw_name = os.path.splitext(os.path.basename(file_name))[0]
 
-    print(raw_name.split("_RHS")[0].split("_LHS")[0])
     if raw_name.split("_RHS")[0].split("_LHS")[0] not in raw_names:
         raw_names.append(raw_name.split("_RHS")[0].split("_LHS")[0])
     textsplit = raw_name.split("_")
@@ -165,6 +164,7 @@ def get_run(fileNames, index):
     return run_name, exp_flow
 
 
+print("Creating graphs...")
 openFiles()
 
 for i in range(0, len(files)):
@@ -178,15 +178,10 @@ for i in range(0, len(files)):
     temp_blaze = Blaze(times[i], flow_rates[i], run, expected_flow=exp_flow)
     blazes.append(temp_blaze)
 
-for text in blaze_runs:
-    print(text)
-
-for text in raw_names:
-    print(text)
-
-for blaze in blazes:
-    blaze.pass_print()
+# for blaze in blazes:
+#     blaze.pass_print()
 plot()
 closeFiles()
+print("Done!")
 
 
