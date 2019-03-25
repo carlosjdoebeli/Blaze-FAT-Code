@@ -100,10 +100,10 @@ def plot():
                     fail_string += ", "
             plt.text(0.5, 1.05, fail_string, color='r', transform=ax.transAxes, fontsize='large', fontweight='bold', ha='center')
 
-        plt.text(1.015, 0.85, "Time resolution = {0:.2f} s\nMedian flow = {1:.2f} mL/s\nFlow percent = {2:.1f}%".format(resolution, median, median/expected*100.0), transform=ax.transAxes, bbox=props, fontsize=11)
+        plt.text(1.015, 0.85, "Time resolution = {0:.2f} s\nMed flow = {1:.2f} mL/min\nFlow percent = {2:.1f}%".format(resolution, median, median/expected*100.0), transform=ax.transAxes, bbox=props, fontsize=11)
 
         for k in range(0, len(dip_magnitudes)):
-            plt.text(1.015, 0.85 - (k + 1) * 0.35, "\nMax dip time = {0:.2f}s\nMagnitude = {1:.2f}mL/s".format(dip_times[k], dip_magnitudes[k]), transform=ax.transAxes, bbox=props, fontsize=11)
+            plt.text(1.015, 0.85 - (k + 1) * 0.35, "\nMax dip time = {0:.2f}s\nMagnitude = {1:.2f} mL/min".format(dip_times[k], dip_magnitudes[k]), transform=ax.transAxes, bbox=props, fontsize=11)
             plt.text(1.015, 0.85 - (k + 1) * 0.35, "Run {0}:\n\n".format(k + 1), transform=ax.transAxes, fontsize=11, color=COLORS[k], fontweight='bold')
 
         plot_name = "Blaze-FAT-Test_" + raw_names[run_index]
