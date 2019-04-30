@@ -18,6 +18,7 @@ MARGIN_FRAC = 0.025         # Median flow rate should be within this fraction of
 ALLOWABLE_TIME_S = 0.8      # Maximum allowable dip time, in seconds
 MAX_DIP_ABS = 4             # Largest allowable absolute dip, in mL/min
 MAX_DIP_FRAC = 0.6          # Minimum acceptable fractional dip compared to the expected flow rate
+# IF THE CODE DOES NOT WORK AS EXPECTED AND THE FLOW DROPS ARE TOO SMALL, CHANGE THE RANGE TO BE SMALLER.
 RANGE = 0.2                 # The range for determining a dip has occurred. If a value is within this fraction of the expected TFR, it is in the range
 THRESHOLD_TIME = 10         # Time, in seconds, to determine when steady flow has been reached. About 1/3 of the expected period
 
